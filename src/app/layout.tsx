@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Problem Solver — Everyday Essentials",
+  title: "Problem Solver | Smart Ideas. Real Solutions.",
   description:
-    "Discover thoughtful everyday products at Problem Solver. Smart choices, better living.",
+    "Problem Solver — innovation, creativity and practical solutions.",
 };
 
 export default function RootLayout({

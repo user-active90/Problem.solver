@@ -1,353 +1,326 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
-const products = [
-  {
-    id: 1,
-    name: "Everyday Essential Hoodie",
-    category: "Clothing",
-    price: 3490,
-    oldPrice: 4990,
-    badge: "BESTSELLER",
-    image:
-      "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=800&q=85",
-  },
-  {
-    id: 2,
-    name: "Minimal Everyday Backpack",
-    category: "Accessories",
-    price: 4290,
-    oldPrice: null,
-    badge: "NEW",
-    image:
-      "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=800&q=85",
-  },
-  {
-    id: 3,
-    name: "Classic Street Sneakers",
-    category: "Footwear",
-    price: 5990,
-    oldPrice: 7490,
-    badge: "SALE",
-    image:
-      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=85",
-  },
-  {
-    id: 4,
-    name: "Modern Everyday Watch",
-    category: "Accessories",
-    price: 6990,
-    oldPrice: null,
-    badge: "",
-    image:
-      "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=85",
-  },
-];
-
-const categories = ["All Products", "Clothing", "Accessories", "Footwear"];
+type Page = "about" | "calculator" | "contact";
 
 export default function Home() {
-  const [activeCategory, setActiveCategory] = useState("All Products");
-  const [search, setSearch] = useState("");
-  const [cartCount, setCartCount] = useState(0);
-  const [notice, setNotice] = useState("");
+  const [activePage, setActivePage] = useState<Page>("about");
 
-  const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
-      const matchesCategory =
-        activeCategory === "All Products" ||
-        product.category === activeCategory;
+  const [display, setDisplay] = useState("0");
+  const [firstValue, setFirstValue] = useState<number | null>(null);
+  const [operator, setOperator] = useState<string | null>(null);
+  const [newNumber, setNewNumber] = useState(false);
 
-      const matchesSearch = product.name
-        .toLowerCase()
-        .includes(search.toLowerCase());
+  // Calculator functions
+  function inputNumber(value: string) {
+    if (display === "Error") {
+      setDisplay(value === "." ? "0." : value);
+      return;
+    }
 
-      return matchesCategory && matchesSearch;
-    });
-  }, [activeCategory, search]);
+    if (newNumber) {
+      setDisplay(value === "." ? "0." : value);
+      setNewNumber(false);
+      return;
+    }
 
-  function addToCart(productName: string) {
-    setCartCount((count) => count + 1);
-    setNotice(`${productName} added to your cart`);
-    window.setTimeout(() => setNotice(""), 2500);
+    if (value === "." && display.includes(".")) return;
+
+    setDisplay(
+      display === "0"
+        ? value === "." ? "0." : value
+        : display + value
+    );
   }
 
-  return (
-    <main className="store">
-      <div className="announcement">
-        FREE SHIPPING ON ORDERS OVER Rs. 5,000
-        <span> | </span>
-        SHOP THE NEW COLLECTION
-      </div>
+  function chooseOperator(nextOperator: string) {
+    if (display === "Error") return;
 
-      <header className="store-header">
+    const current = Number(display);
+
+    if (operator && firstValue !== null && !newNumber) {
+      const result = calculate(firstValue, current, operator);
+      if (!Number.isFinite(result)) {
+        setDisplay("Error");
+        setFirstValue(null);
+        setOperator(null);
+        setNewNumber(true);
+        return;
+      }
+      setFirstValue(result);
+      setDisplay(String(Number(result.toPrecision(10))));
+    } else {
+      setFirstValue(current);
+    }
+
+    setOperator(nextOperator);
+    setNewNumber(true);
+  }
+
+  function calculate(a: number, b: number, op: string) {
+    switch (op) {
+      case "+": return a + b;
+      case "−": return a - b;
+      case "×": return a * b;
+      case "÷": return b === 0 ? NaN : a / b;
+      default: return b;
+    }
+  }
+
+  function showResult() {
+    if (firstValue === null || !operator || display === "Error") return;
+
+    const result = calculate(firstValue, Number(display), operator);
+
+    setDisplay(
+      Number.isFinite(result)
+        ? String(Number(result.toPrecision(10)))
+        : "Error"
+    );
+
+    setFirstValue(null);
+    setOperator(null);
+    setNewNumber(true);
+  }
+
+  function clearCalculator() {
+    setDisplay("0");
+    setFirstValue(null);
+    setOperator(null);
+    setNewNumber(false);
+  }
+
+  function changePage(page: Page) {
+    setActivePage(page);
+  }
+
+  // Replace this with your WhatsApp number.
+  // Use country code, without + or spaces.
+  const whatsappNumber = "923338617531";
+
+  return (
+    <main className="website">
+
+      {/* HEADER */}
+      <header className="header">
         <a href="#" className="brand">
-          PROBLEM<span>SOLVER</span>
-          <small>SMART CHOICES. BETTER LIVING.</small>
+          PROBLEM<span>SOLVER.</span>
+          <small>SMART IDEAS. REAL SOLUTIONS.</small>
         </a>
 
-        <nav className="main-nav">
-          <a href="#home">Home</a>
-          <a href="#shop">Shop</a>
-          <a href="#collections">Collections</a>
-          <a href="#about">Our Story</a>
-        </nav>
-
-        <div className="header-actions">
-          <label className="search-box">
-            <span>⌕</span>
-            <input
-              aria-label="Search products"
-              placeholder="Search products"
-              value={search}
-              onChange={(event) => {
-                setSearch(event.target.value);
-                document
-                  .getElementById("shop")
-                  ?.scrollIntoView({ behavior: "smooth" });
-              }}
-            />
-          </label>
-
-          <button
-            className="cart-button"
-            onClick={() =>
-              setNotice(
-                cartCount
-                  ? `Your demo cart contains ${cartCount} item(s).`
-                  : "Your cart is currently empty."
-              )
-            }
-          >
-            Bag ({cartCount})
-          </button>
-        </div>
+        <span className="header-label">INNOVATION & SOLUTIONS</span>
       </header>
 
-      <section className="hero" id="home">
-        <div className="hero-copy">
-          <p className="eyebrow">THE NEW EVERYDAY</p>
+      {/* HERO */}
+      <section className="hero">
+        <p className="hero-tag">WELCOME TO PROBLEM SOLVER</p>
 
-          <h1>
-            Find your
-            <br />
-            <em>better.</em>
-          </h1>
+        <h1>
+          Every problem has
+          <br />
+          a <span>solution.</span>
+        </h1>
 
-          <p className="hero-description">
-            Thoughtful essentials. Modern design.
-            Everyday products made to fit your life.
-          </p>
+        <p className="hero-description">
+          We believe that every challenge is an opportunity
+          to think differently, find answers, and create
+          something better.
+        </p>
 
-          <a href="#shop" className="dark-button">
-            SHOP THE COLLECTION <span>→</span>
-          </a>
-
-          <div className="hero-note">
-            <span>01</span> — Curated for everyday living
-          </div>
-        </div>
-
-        <div className="hero-image">
-          <div className="hero-image-label">
-            <span>PROBLEM SOLVER</span>
-            <span>COLLECTION 001</span>
-          </div>
-        </div>
-      </section>
-
-      <section className="benefits">
-        <div>✦ Carefully selected products</div>
-        <div>✦ Quality you can feel</div>
-        <div>✦ Designed for everyday use</div>
-        <div>✦ Simple, secure shopping</div>
-      </section>
-
-      <section className="collections" id="collections">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">EXPLORE OUR WORLD</p>
-            <h2>Shop by collection</h2>
-          </div>
-          <a href="#shop" className="text-link">
-            VIEW ALL COLLECTIONS →
-          </a>
-        </div>
-
-        <div className="collection-grid">
-          <a href="#shop" className="collection-card collection-one">
-            <span>01 / EVERYDAY</span>
-            <h3>Daily Essentials</h3>
-            <b>SHOP NOW ↗</b>
-          </a>
-
-          <a href="#shop" className="collection-card collection-two">
-            <span>02 / STYLE</span>
-            <h3>Modern Living</h3>
-            <b>SHOP NOW ↗</b>
-          </a>
-
-          <a href="#shop" className="collection-card collection-three">
-            <span>03 / DETAILS</span>
-            <h3>Finishing Touches</h3>
-            <b>SHOP NOW ↗</b>
-          </a>
-        </div>
-      </section>
-
-      <section className="products-section" id="shop">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">THE GOOD STUFF</p>
-            <h2>Featured products</h2>
-          </div>
-          <span className="product-count">
-            {filteredProducts.length} PRODUCTS
-          </span>
-        </div>
-
-        <div className="category-tabs">
-          {categories.map((category) => (
-            <button
-              key={category}
-              className={
-                activeCategory === category ? "category-active" : ""
-              }
-              onClick={() => setActiveCategory(category)}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
-
-        <div className="product-grid">
-          {filteredProducts.map((product) => (
-            <article className="product-card" key={product.id}>
-              <div className="product-image-wrap">
-                <img src={product.image} alt={product.name} />
-
-                {product.badge && (
-                  <span className="product-badge">
-                    {product.badge}
-                  </span>
-                )}
-
-                <button
-                  className="quick-add"
-                  onClick={() => addToCart(product.name)}
-                >
-                  + QUICK ADD
-                </button>
-              </div>
-
-              <div className="product-info">
-                <p className="product-category">{product.category}</p>
-                <h3>{product.name}</h3>
-
-                <div className="product-prices">
-                  <span>Rs. {product.price.toLocaleString("en-PK")}</span>
-
-                  {product.oldPrice && (
-                    <del>
-                      Rs. {product.oldPrice.toLocaleString("en-PK")}
-                    </del>
-                  )}
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-
-        {filteredProducts.length === 0 && (
-          <p className="empty-products">
-            No products found. Try another search.
-          </p>
-        )}
-
-        <div className="center-button">
+        {/* THREE MAIN BUTTONS */}
+        <div className="navigation-buttons">
           <button
-            className="outline-button"
-            onClick={() => {
-              setActiveCategory("All Products");
-              setSearch("");
-            }}
+            className={activePage === "about" ? "nav-btn active" : "nav-btn"}
+            onClick={() => changePage("about")}
           >
-            VIEW ALL PRODUCTS
+            About Us
+          </button>
+
+          <button
+            className={activePage === "calculator" ? "nav-btn active" : "nav-btn"}
+            onClick={() => changePage("calculator")}
+          >
+            Calculator
+          </button>
+
+          <button
+            className={activePage === "contact" ? "nav-btn active" : "nav-btn"}
+            onClick={() => changePage("contact")}
+          >
+            Contact
           </button>
         </div>
       </section>
 
-      <section className="brand-story" id="about">
-        <div className="story-image" />
+      {/* CONTENT AREA */}
+      <section className="content-area">
 
-        <div className="story-copy">
-          <p className="eyebrow">OUR PHILOSOPHY</p>
-          <h2>
-            Less noise.
-            <br />
-            <em>More meaning.</em>
-          </h2>
+        {/* ABOUT PAGE */}
+        {activePage === "about" && (
+          <div className="content-card">
+            <p className="section-tag">01 / ABOUT US</p>
 
-          <p>
-            At Problem Solver, we believe good products
-            should make everyday life simpler. We focus
-            on thoughtful design, useful details, and
-            quality that lasts.
-          </p>
+            <h2>Who We Are</h2>
 
-          <a href="#shop" className="text-link">
-            DISCOVER OUR APPROACH →
-          </a>
-        </div>
+            <p className="content-text">
+              Problem Solver is a platform built around
+              creativity, innovation, and practical thinking.
+              Our goal is to make everyday tasks easier by
+              providing simple and useful solutions.
+            </p>
+
+            <div className="about-grid">
+              <div className="info-box">
+                <h3>Our Mission</h3>
+                <p>
+                  To turn challenges into opportunities
+                  through smart ideas and technology.
+                </p>
+              </div>
+
+              <div className="info-box">
+                <h3>Our Vision</h3>
+                <p>
+                  To create useful digital experiences
+                  that make life simpler and better.
+                </p>
+              </div>
+
+              <div className="info-box">
+                <h3>Our Values</h3>
+                <p>
+                  Creativity, honesty, innovation,
+                  and continuous improvement.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* CALCULATOR PAGE */}
+        {activePage === "calculator" && (
+          <div className="content-card calculator-section">
+            <p className="section-tag">02 / DIGITAL TOOL</p>
+
+            <h2>Simple Calculator</h2>
+
+            <p className="content-text">
+              Perform basic calculations quickly and easily.
+            </p>
+
+            <div className="calculator">
+              <div className="calculator-display">
+                <span>PROBLEM SOLVER CALCULATOR</span>
+                <div className="display-number">{display}</div>
+              </div>
+
+              <div className="calculator-buttons">
+                <button className="calc-special" onClick={clearCalculator}>
+                  AC
+                </button>
+                <button className="calc-special" onClick={() => {
+                  if (display !== "Error") setDisplay(String(-Number(display)));
+                }}>
+                  +/−
+                </button>
+                <button className="calc-special" onClick={() => {
+                  if (display !== "Error") setDisplay(String(Number(display) / 100));
+                }}>
+                  %
+                </button>
+                <button className="calc-operator" onClick={() => chooseOperator("÷")}>÷</button>
+
+                {["7", "8", "9"].map((n) => (
+                  <button key={n} className="calc-number" onClick={() => inputNumber(n)}>{n}</button>
+                ))}
+                <button className="calc-operator" onClick={() => chooseOperator("×")}>×</button>
+
+                {["4", "5", "6"].map((n) => (
+                  <button key={n} className="calc-number" onClick={() => inputNumber(n)}>{n}</button>
+                ))}
+                <button className="calc-operator" onClick={() => chooseOperator("−")}>−</button>
+
+                {["1", "2", "3"].map((n) => (
+                  <button key={n} className="calc-number" onClick={() => inputNumber(n)}>{n}</button>
+                ))}
+                <button className="calc-operator" onClick={() => chooseOperator("+")}>+</button>
+
+                <button className="calc-number zero" onClick={() => inputNumber("0")}>0</button>
+                <button className="calc-number" onClick={() => inputNumber(".")}>.</button>
+                <button className="calc-equals" onClick={showResult}>=</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* CONTACT PAGE */}
+        {activePage === "contact" && (
+          <div className="content-card">
+            <p className="section-tag">03 / GET IN TOUCH</p>
+
+            <h2>Let&apos;s Connect.</h2>
+
+            <p className="content-text">
+              Have an idea, a question, or a problem that
+              needs solving? We&apos;d love to hear from you.
+            </p>
+
+            <div className="contact-grid">
+              <div className="info-box">
+                <span className="contact-icon">✦</span>
+                <h3>The Innovator</h3>
+                <p>
+                  Building ideas into practical digital
+                  experiences through creativity and technology.
+                </p>
+              </div>
+
+              <div className="info-box">
+                <span className="contact-icon">☏</span>
+                <h3>WhatsApp</h3>
+                <p>Contact us directly for questions and enquiries.</p>
+
+                <a
+                  className="contact-link"
+                  href={`https://wa.me/${+923338617531}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Chat on WhatsApp →
+                </a>
+              </div>
+
+              <div className="info-box">
+                <span className="contact-icon">✉</span>
+                <h3>Email</h3>
+                <p>Send us your questions or business enquiries.</p>
+
+                <a
+                  className="contact-link"
+                  href="mailto:Thealex8769@gmail.com"
+                >
+                  Send an email →
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+
       </section>
 
-      <section className="newsletter">
-        <p className="eyebrow">STAY IN THE LOOP</p>
-        <h2>Good things, occasionally.</h2>
-        <p>
-          Get updates on new collections and special offers.
-        </p>
-
-        <form
-          className="newsletter-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            setNotice("Thanks for joining our newsletter!");
-          }}
-        >
-          <input
-            type="email"
-            placeholder="Your email address"
-            aria-label="Your email address"
-            required
-          />
-          <button type="submit">SUBSCRIBE →</button>
-        </form>
-      </section>
-
-      <footer className="store-footer">
-        <a href="#" className="brand">
-          PROBLEM<span>SOLVER</span>
-          <small>SMART CHOICES. BETTER LIVING.</small>
-        </a>
-
-        <p>© 2026 Problem Solver. Made for everyday life.</p>
-
-        <div className="footer-links">
-          <a href="#shop">Shop</a>
-          <a href="#about">About</a>
-          <a href="#contact">Contact</a>
+      {/* FOOTER */}
+      <footer className="footer">
+        <div>
+          <strong>PROBLEM SOLVER.</strong>
+          <p>Smart ideas. Real solutions.</p>
         </div>
+
+        <p>© 2026 Problem Solver. All rights reserved.</p>
       </footer>
 
-      {notice && (
-        <div className="store-notice" role="status">
-          {notice}
-          <button onClick={() => setNotice("")}>×</button>
-        </div>
-      )}
     </main>
   );
 }
